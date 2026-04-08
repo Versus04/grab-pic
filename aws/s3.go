@@ -17,7 +17,7 @@ func UploadToS3(file *os.File) (string, error) {
 		log.Fatal("Error Loading the .env File ", err)
 
 	}
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("ap-south-1"))
 	if err != nil {
 		log.Fatal("error loading the configuration ", err)
 	}

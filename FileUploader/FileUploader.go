@@ -13,18 +13,17 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+var Db *pgx.Conn
+
 func FileUploader(w http.ResponseWriter, r *http.Request) {
 	detection.CreateCollection()
 	r.ParseMultipartForm(20 << 20)
-	Db, err := pgx.Connect(context.TODO(), "postgres://postgres:postgres@localhost:5432/grabpic")
-	if err != nil {
-		fmt.Println("Error connecting to postgres ", err)
-		return
-	}
+	Db, _ = pgx.Connect(context.TODO(), "postgres://postgres:postgres@localhost:5432/grabpic")
+
 	fileList := r.MultipartForm.File["files"]
 	name := "goa trip"
 	var album_id int
-	err = Db.QueryRow(context.TODO(), `INSERT INTO albums(name) VALUES ($1) RETURNING album_id`, name).Scan(&album_id)
+	err := Db.QueryRow(context.TODO(), `INSERT INTO albums(name) VALUES ($1) RETURNING album_id`, name).Scan(&album_id)
 	if err != nil {
 		fmt.Println("Error executing database")
 		return
@@ -49,5 +48,6 @@ func FileUploader(w http.ResponseWriter, r *http.Request) {
 		detection.Detect("uploads/"+filepath.Base(temp.Name()), url, temp, image_id, album_id, Db)
 		temp.Close()
 		file.Close()
+
 	}
 }

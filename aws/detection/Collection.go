@@ -16,7 +16,7 @@ func CreateCollection() {
 	if err := godotenv.Load(".env"); err != nil {
 		fmt.Println("Error fetching env file ", err)
 	}
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("ap-south-1"))
 	if err != nil {
 		fmt.Println("Error loading configuration ", err)
 	}
