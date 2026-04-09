@@ -11,15 +11,22 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/rekognition"
 	"github.com/aws/aws-sdk-go-v2/service/rekognition/types"
 	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 )
 
 func CreateImageBuffer(file *os.File, imageHeight int, imageWidth int, bbox *types.BoundingBox) (bytes.Buffer, error) {
 	return bytes.Buffer{}, nil
 }
 func Detect(filename string, link string, file *os.File, image_id int, album_id int, Db *pgx.Conn) {
+	if err := godotenv.Load(".env"); err != nil {
+		fmt.Println("Error fetching env file ", err)
+	}
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("ap-south-1"))
+	rekClient = rekognition.NewFromConfig(cfg)
 	collection_id := "trial-collection"
 	images := &types.Image{
 

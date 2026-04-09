@@ -1,288 +1,394 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>GrabPic</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com"/>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-    <style>
-        *{box-sizing:border-box;margin:0;padding:0}
-        :root{
-            --sans:'IBM Plex Sans',sans-serif;
-            --mono:'IBM Plex Mono',monospace;
-            --bg:#ffffff;
-            --bg2:#f5f5f4;
-            --bg3:#ebebea;
-            --t1:#1a1a18;
-            --t2:#6b6b67;
-            --t3:#a8a8a4;
-            --bdr:rgba(0,0,0,.1);
-            --bdr2:rgba(0,0,0,.18);
-            --r:8px;
-            --rl:12px;
-            --ok-bg:#eaf3de;
-            --ok-fg:#3b6d11;
-            --err-bg:#fcebeb;
-            --err-fg:#a32d2d;
-        }
-        @media(prefers-color-scheme:dark){
-            :root{
-                --bg:#1c1c1a;
-                --bg2:#252522;
-                --bg3:#2e2e2b;
-                --t1:#f0f0ec;
-                --t2:#9a9a94;
-                --t3:#616160;
-                --bdr:rgba(255,255,255,.08);
-                --bdr2:rgba(255,255,255,.15);
-                --ok-bg:#173404;
-                --ok-fg:#c0dd97;
-                --err-bg:#501313;
-                --err-fg:#f7c1c1;
-            }
-        }
-        body{font-family:var(--sans);color:var(--t1);background:var(--bg3);font-size:14px;min-height:100vh}
-        .wrap{max-width:560px;margin:0 auto;padding:2.5rem 1.25rem 5rem}
-        .header{margin-bottom:2.25rem}
-        .wordmark{font-family:var(--mono);font-size:15px;font-weight:500;letter-spacing:-.3px;display:flex;align-items:center;gap:10px}
-        .dot{width:8px;height:8px;border-radius:50%;background:var(--t1);display:inline-block}
-        .endpoint-bar{margin-top:.75rem;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-        .pill{font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:100px;background:var(--bg2);border:0.5px solid var(--bdr2);color:var(--t2)}
-        .base-btn{font-family:var(--mono);font-size:11px;color:var(--t3);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
-        .base-btn:hover{color:var(--t1)}
-        .seg{display:flex;gap:1px;margin-bottom:2rem;border:0.5px solid var(--bdr2);border-radius:var(--r);overflow:hidden}
-        .seg-btn{flex:1;padding:8px;background:var(--bg2);border:none;font-family:var(--sans);font-size:13px;color:var(--t2);cursor:pointer;transition:all .12s}
-        .seg-btn.on{background:var(--bg);color:var(--t1);font-weight:500}
-        .section{display:none}.section.on{display:block}
-        .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);margin-bottom:7px;display:block}
-        .field{margin-bottom:1.25rem}
-        input[type=text]{width:100%;padding:9px 11px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:13px;outline:none;transition:border .12s}
-        input[type=text]:focus{border-color:var(--t1)}
-        .drop{border:0.5px dashed var(--bdr2);border-radius:var(--rl);padding:2.5rem 1rem;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg);position:relative}
-        .drop:hover,.drop.over{background:var(--bg2);border-color:var(--t2)}
-        .drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-        .drop-icon{width:36px;height:36px;border:0.5px solid var(--bdr2);border-radius:8px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center}
-        .drop-icon svg{width:16px;height:16px;stroke:var(--t2);fill:none;stroke-width:1.5}
-        .drop p{font-size:13px;color:var(--t2);pointer-events:none}
-        .drop .sub{font-size:11px;color:var(--t3);margin-top:4px;font-family:var(--mono)}
-        .picked{font-family:var(--mono);font-size:11px;color:var(--t1);margin-top:8px;font-weight:500;pointer-events:none}
-        .preview-wrap{margin-top:10px;display:none}
-        .preview-wrap.on{display:block}
-        .preview-img{width:72px;height:72px;border-radius:var(--r);object-fit:cover;border:0.5px solid var(--bdr2)}
-        .btn{width:100%;padding:10px;background:var(--t1);color:var(--bg);border:none;border-radius:var(--r);font-family:var(--sans);font-size:14px;font-weight:500;cursor:pointer;transition:opacity .12s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:.25rem}
-        .btn:hover{opacity:.82}
-        .btn:disabled{opacity:.35;cursor:not-allowed}
-        .toast{margin-top:1rem;padding:10px 13px;border-radius:var(--r);font-size:13px;display:none;font-family:var(--mono)}
-        .toast.on{display:block}
-        .toast.ok{background:var(--ok-bg);color:var(--ok-fg)}
-        .toast.err{background:var(--err-bg);color:var(--err-fg)}
-        .toast.wait{background:var(--bg2);color:var(--t2)}
-        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:1.25rem}
-        .photo-card{border-radius:var(--r);overflow:hidden;border:0.5px solid var(--bdr);background:var(--bg2);position:relative;aspect-ratio:1}
-        .photo-card img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity .2s}
-        .photo-card:hover img{opacity:.85}
-        .photo-card a{position:absolute;bottom:0;left:0;right:0;padding:6px 8px;background:rgba(0,0,0,.55);font-family:var(--mono);font-size:10px;color:#fff;text-decoration:none;display:flex;justify-content:space-between;align-items:center;opacity:0;transition:opacity .15s}
-        .photo-card:hover a{opacity:1}
-        .photo-card a span{opacity:.7}
-        .skel{background:var(--bg3);border-radius:var(--r);aspect-ratio:1;animation:pulse 1.2s ease-in-out infinite}
-        @keyframes pulse{0%,100%{opacity:.4}50%{opacity:.8}}
-        .spin{width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:rot .55s linear infinite;display:inline-block}
-        @keyframes rot{to{transform:rotate(360deg)}}
-        .count-tag{font-family:var(--mono);font-size:11px;color:var(--t3);margin-top:10px}
-    </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GrabPic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f2f0eb;
+  --paper:#e8e5de;
+  --white:#ffffff;
+  --ink:#0d0d0d;
+  --ink2:#3a3a3a;
+  --ink3:#888580;
+  --accent:#ff3b00;
+  --accent-bg:#fff0ec;
+  --green:#00c37a;
+  --green-bg:#e6fff4;
+  --bdr:#0d0d0d;
+  --sans:'Space Grotesk',sans-serif;
+  --mono:'Space Mono',monospace;
+}
+html,body{height:100%;background:var(--bg)}
+body{font-family:var(--sans);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased}
+
+/* top bar */
+.topbar{border-bottom:2px solid var(--bdr);display:flex;align-items:stretch;height:56px}
+.topbar-logo{display:flex;align-items:center;gap:0;border-right:2px solid var(--bdr);padding:0 24px}
+.logo-box{background:var(--ink);color:var(--bg);font-family:var(--sans);font-size:15px;font-weight:700;letter-spacing:-.3px;padding:6px 10px;border-radius:4px;line-height:1}
+.logo-slash{font-size:20px;font-weight:700;color:var(--ink3);margin:0 10px}
+.logo-sub{font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.topbar-nav{display:flex;align-items:stretch;flex:1}
+.topbar-tab{display:flex;align-items:center;gap:9px;padding:0 24px;cursor:pointer;border:none;background:none;font-family:var(--sans);font-size:13px;font-weight:600;color:var(--ink3);border-right:2px solid var(--bdr);transition:all .12s;position:relative}
+.topbar-tab:hover{background:var(--paper);color:var(--ink)}
+.topbar-tab.on{background:var(--ink);color:var(--bg)}
+.topbar-tab.on .tab-badge{background:var(--accent);color:#fff}
+.tab-badge{font-family:var(--mono);font-size:9px;padding:2px 5px;border-radius:2px;background:var(--paper);color:var(--ink3);font-weight:400}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:0;border-left:2px solid var(--bdr)}
+.server-chip{display:flex;align-items:center;gap:8px;padding:0 20px;height:100%;font-family:var(--mono);font-size:11px;color:var(--ink3);border:none;background:none;cursor:pointer;transition:background .12s}
+.server-chip:hover{background:var(--paper)}
+.server-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
+.server-url{color:var(--ink2)}
+
+/* layout */
+.layout{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 56px)}
+.pane{padding:2.5rem;border-right:2px solid var(--bdr)}
+.pane:last-child{border-right:none}
+.page{display:none}.page.on{display:block}
+
+/* section headings */
+.pane-title{font-size:11px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--ink3);margin-bottom:2rem;display:flex;align-items:center;gap:10px}
+.pane-title-num{font-size:10px;padding:2px 7px;border:1.5px solid var(--bdr);border-radius:2px;color:var(--ink);font-weight:700}
+
+.big-label{font-size:32px;font-weight:700;letter-spacing:-1.2px;line-height:1;color:var(--ink);margin-bottom:.4rem}
+.sub-label{font-size:13px;color:var(--ink3);font-family:var(--mono);margin-bottom:2rem;font-weight:400}
+
+/* form elements */
+.field{margin-bottom:1.25rem}
+.lbl{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:6px;display:block}
+input[type=text]{width:100%;padding:11px 13px;border:2px solid var(--bdr);border-radius:4px;background:var(--white);color:var(--ink);font-family:var(--mono);font-size:13px;outline:none;transition:border .1s,box-shadow .1s}
+input[type=text]:focus{border-color:var(--accent);box-shadow:4px 4px 0 var(--accent)}
+input[type=text]::placeholder{color:#bbb}
+
+.drop{border:2px dashed #ccc;border-radius:6px;padding:2rem 1rem;text-align:center;cursor:pointer;transition:all .15s;background:var(--white);position:relative}
+.drop:hover,.drop.over{border-color:var(--ink);border-style:solid;background:var(--paper)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-icon{width:44px;height:44px;background:var(--bg);border:2px solid var(--bdr);border-radius:4px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center}
+.drop-icon svg{width:18px;height:18px;stroke:var(--ink2);fill:none;stroke-width:2}
+.drop-title{font-size:14px;font-weight:600;color:var(--ink);pointer-events:none}
+.drop-sub{font-size:11px;color:var(--ink3);margin-top:3px;font-family:var(--mono);pointer-events:none}
+.picked{font-family:var(--mono);font-size:11px;color:var(--accent);margin-top:8px;font-weight:700;pointer-events:none}
+
+.preview-wrap{margin-top:12px;display:none;align-items:center;gap:12px;padding:10px 12px;background:var(--white);border:2px solid var(--bdr);border-radius:4px}
+.preview-wrap.on{display:flex}
+.preview-img{width:48px;height:48px;border-radius:3px;object-fit:cover;border:2px solid var(--bdr)}
+.preview-info{font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.preview-name{color:var(--ink);font-weight:700;margin-bottom:2px;word-break:break-all}
+
+.btn{width:100%;padding:13px;background:var(--ink);color:var(--bg);border:2px solid var(--ink);border-radius:4px;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;gap:9px;letter-spacing:-.2px;margin-top:.25rem;box-shadow:4px 4px 0 var(--ink3)}
+.btn:hover{background:var(--accent);border-color:var(--accent);box-shadow:4px 4px 0 #a82800}
+.btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+.btn:active:not(:disabled){transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink3)}
+
+/* toast */
+.toast{margin-top:1rem;padding:10px 14px;border-radius:4px;font-size:12px;display:none;font-family:var(--mono);border:2px solid transparent;align-items:center;gap:10px}
+.toast.on{display:flex}
+.toast.ok{background:var(--green-bg);border-color:var(--green);color:#007a4d}
+.toast.err{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.toast.wait{background:var(--paper);border-color:#ccc;color:var(--ink3)}
+.toast-icon{font-size:14px;flex-shrink:0}
+
+/* results */
+.results-bar{display:flex;align-items:center;justify-content:space-between;margin:2rem 0 1rem;padding-bottom:.75rem;border-bottom:2px solid var(--bdr)}
+.results-label{font-size:13px;font-weight:700;color:var(--ink);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px}
+.results-count{font-family:var(--mono);font-size:11px;color:var(--ink3);background:var(--paper);border:1.5px solid var(--bdr);padding:2px 8px;border-radius:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px}
+.photo-card{border-radius:3px;overflow:hidden;border:2px solid var(--bdr);background:var(--paper);position:relative;aspect-ratio:1;cursor:pointer;transition:transform .15s}
+.photo-card:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--ink)}
+.photo-card img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-card-overlay{position:absolute;inset:0;background:rgba(13,13,13,.75);opacity:0;transition:opacity .15s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.photo-card:hover .photo-card-overlay{opacity:1}
+.photo-card-overlay a{font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;text-decoration:none;padding:5px 10px;border:1.5px solid rgba(255,255,255,.5);border-radius:2px}
+.photo-card-overlay a:hover{background:rgba(255,255,255,.15)}
+.photo-num{position:absolute;top:6px;left:6px;font-family:var(--mono);font-size:9px;font-weight:700;color:rgba(255,255,255,.7);background:rgba(0,0,0,.6);padding:2px 5px;border-radius:2px}
+
+.skel{background:var(--paper);border-radius:3px;aspect-ratio:1;animation:pulse 1.2s ease-in-out infinite;border:2px solid var(--bdr)}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:.9}}
+.spin{width:14px;height:14px;border:2.5px solid rgba(242,240,235,.3);border-top-color:var(--bg);border-radius:50%;animation:rot .5s linear infinite;display:inline-block}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* divider line */
+.rule{height:2px;background:var(--bdr);margin:1.75rem 0}
+
+/* responsive */
+@media(max-width:760px){
+  .layout{grid-template-columns:1fr}
+  .pane{border-right:none;border-bottom:2px solid var(--bdr);padding:1.75rem 1.25rem}
+  .topbar-logo .logo-sub{display:none}
+  .big-label{font-size:24px}
+}
+</style>
 </head>
 <body>
-<div class="wrap">
-    <div class="header">
-        <div class="wordmark"><span class="dot"></span> grabpic</div>
-        <div class="endpoint-bar">
-            <span class="pill">POST /upload</span>
-            <span class="pill">POST /getphoto</span>
-            <button class="base-btn" id="base-lbl" onclick="changeBase()">localhost:8080</button>
-        </div>
-    </div>
 
-    <div class="seg">
-        <button class="seg-btn on" onclick="show('upload',this)">Upload photos</button>
-        <button class="seg-btn" onclick="show('find',this)">Find my photos</button>
-    </div>
+<header class="topbar">
+  <div class="topbar-logo">
+    <div class="logo-box">GP</div>
+    <span class="logo-slash">/</span>
+    <span class="logo-sub">face recognition</span>
+  </div>
+  <div class="topbar-nav">
+    <button class="topbar-tab on" onclick="showPage('upload',this)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 1v8M3 5l4-4 4 4"/><path d="M1 11h12"/></svg>
+      Upload
+      <span class="tab-badge">POST /upload</span>
+    </button>
+    <button class="topbar-tab" onclick="showPage('find',this)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="4"/><path d="M9.5 9.5l3 3"/></svg>
+      Find me
+      <span class="tab-badge">POST /getphoto</span>
+    </button>
+  </div>
+  <div class="topbar-right">
+    <button class="server-chip" onclick="changeBase()">
+      <div class="server-dot"></div>
+      <span class="server-url" id="base-display">localhost:8080</span>
+    </button>
+  </div>
+</header>
 
-    <div id="sec-upload" class="section on">
-        <div class="field">
-            <label class="lbl">Album ID</label>
-            <input type="text" id="up-album" placeholder="e.g. album_abc123"/>
-        </div>
-        <div class="field">
-            <label class="lbl">Photos</label>
-            <div class="drop" id="up-drop">
-                <input type="file" id="up-files" multiple accept="image/*" onchange="pickUpload(this.files)"/>
-                <div class="drop-icon">
-                    <svg viewBox="0 0 16 16"><path d="M8 2v8M4 6l4-4 4 4"/><path d="M2 12h12"/></svg>
-                </div>
-                <p>Drop photos or click to select</p>
-                <p class="sub">JPG / PNG — multiple OK</p>
-                <div class="picked" id="up-picked"></div>
-            </div>
-        </div>
-        <button class="btn" id="up-btn" onclick="doUpload()">Upload</button>
-        <div class="toast" id="up-toast"></div>
-    </div>
+<div class="layout">
 
-    <div id="sec-find" class="section">
+  <!-- UPLOAD PAGE -->
+  <div id="page-upload" class="page on" style="grid-column:1/-1">
+    <div style="display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 56px)">
+
+      <div class="pane">
+        <div class="pane-title"><span class="pane-title-num">01</span> Configuration</div>
+        <div class="big-label">Upload<br/>photos.</div>
+        <div class="sub-label">// index faces into rekognition</div>
+        <div class="rule"></div>
         <div class="field">
-            <label class="lbl">Album ID</label>
-            <input type="text" id="fi-album" placeholder="e.g. album_abc123"/>
+          <label class="lbl">Album ID</label>
+          <input type="text" id="up-album" placeholder="album_abc123"/>
         </div>
-        <div class="field">
-            <label class="lbl">Your photo</label>
-            <div class="drop" id="fi-drop">
-                <input type="file" id="fi-file" accept="image/*" onchange="pickRef(this.files)"/>
-                <div class="drop-icon">
-                    <svg viewBox="0 0 16 16"><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
-                </div>
-                <p>Drop your photo here</p>
-                <p class="sub">clear face shot works best</p>
-                <div class="picked" id="fi-picked"></div>
-            </div>
-            <div class="preview-wrap" id="fi-preview-wrap">
-                <img class="preview-img" id="fi-preview" src="" alt="preview"/>
-            </div>
+        <button class="btn" id="up-btn" onclick="doUpload()">
+          Upload &amp; index →
+        </button>
+        <div class="toast" id="up-toast"><span class="toast-icon" id="up-toast-icon"></span><span id="up-toast-msg"></span></div>
+      </div>
+
+      <div class="pane">
+        <div class="pane-title"><span class="pane-title-num">02</span> Select files</div>
+        <div class="drop" id="up-drop">
+          <input type="file" id="up-files" multiple accept="image/*" onchange="pickUpload(this.files)"/>
+          <div class="drop-icon">
+            <svg viewBox="0 0 18 18"><path d="M9 2v10M4 6l5-4 5 4"/><path d="M2 14h14"/></svg>
+          </div>
+          <div class="drop-title">Drop photos here</div>
+          <div class="drop-sub">or click to browse — JPG / PNG</div>
+          <div class="picked" id="up-picked"></div>
         </div>
-        <button class="btn" id="fi-btn" onclick="doFind()">Find my photos</button>
-        <div class="toast" id="fi-toast"></div>
-        <div class="count-tag" id="fi-count"></div>
-        <div class="grid" id="fi-grid"></div>
+      </div>
+
     </div>
+  </div>
+
+  <!-- FIND PAGE -->
+  <div id="page-find" class="page" style="grid-column:1/-1">
+    <div style="display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 56px)">
+
+      <div class="pane">
+        <div class="pane-title"><span class="pane-title-num">01</span> Parameters</div>
+        <div class="big-label">Find<br/>yourself.</div>
+        <div class="sub-label">// match face across album</div>
+        <div class="rule"></div>
+        <div class="field">
+          <label class="lbl">Album ID</label>
+          <input type="text" id="fi-album" placeholder="album_abc123"/>
+        </div>
+        <div class="field">
+          <label class="lbl">Your photo</label>
+          <div class="drop" id="fi-drop">
+            <input type="file" id="fi-file" accept="image/*" onchange="pickRef(this.files)"/>
+            <div class="drop-icon">
+              <svg viewBox="0 0 18 18"><circle cx="9" cy="7" r="3.5"/><path d="M2 16c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
+            </div>
+            <div class="drop-title">Drop your reference photo</div>
+            <div class="drop-sub">clear face shot works best</div>
+            <div class="picked" id="fi-picked"></div>
+          </div>
+          <div class="preview-wrap" id="fi-preview-wrap">
+            <img class="preview-img" id="fi-preview" src="" alt="preview"/>
+            <div class="preview-info">
+              <div class="preview-name" id="fi-preview-name"></div>
+              <div>ready to scan</div>
+            </div>
+          </div>
+        </div>
+        <button class="btn" id="fi-btn" onclick="doFind()">
+          Search album →
+        </button>
+        <div class="toast" id="fi-toast"><span class="toast-icon" id="fi-toast-icon"></span><span id="fi-toast-msg"></span></div>
+      </div>
+
+      <div class="pane">
+        <div class="pane-title"><span class="pane-title-num">02</span> Results</div>
+        <div id="results-empty" style="padding-top:1rem">
+          <div style="font-size:48px;font-weight:700;color:#e0ddd6;letter-spacing:-2px;line-height:1">—</div>
+          <div style="font-family:var(--mono);font-size:12px;color:var(--ink3);margin-top:8px">results appear here</div>
+        </div>
+        <div id="results-section" style="display:none">
+          <div class="results-bar">
+            <span class="results-label">Matches</span>
+            <span class="results-count" id="fi-count"></span>
+          </div>
+          <div class="grid" id="fi-grid"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </div>
 
 <script>
-    let BASE = 'http://localhost:8080';
-    let uploadFiles = [];
-    let refFile = null;
+let BASE = 'http://localhost:8080';
+let uploadFiles = [];
+let refFile = null;
 
-    document.getElementById('base-lbl').textContent = BASE.replace('http://', '');
+document.getElementById('base-display').textContent = BASE.replace('http://','');
 
-    function changeBase() {
-        const v = prompt('Backend base URL', BASE);
-        if (v) {
-            BASE = v.replace(/\/$/, '');
-            document.getElementById('base-lbl').textContent = BASE.replace('http://','').replace('https://','');
-        }
+function changeBase() {
+  const v = prompt('Backend base URL', BASE);
+  if (v) {
+    BASE = v.replace(/\/$/, '');
+    document.getElementById('base-display').textContent = BASE.replace('http://','').replace('https://','');
+  }
+}
+
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.topbar-tab').forEach(b => b.classList.remove('on'));
+  document.getElementById('page-' + id).classList.add('on');
+  btn.classList.add('on');
+}
+
+function pickUpload(f) {
+  uploadFiles = Array.from(f);
+  document.getElementById('up-picked').textContent = uploadFiles.length + ' file' + (uploadFiles.length !== 1 ? 's' : '') + ' selected';
+}
+
+function pickRef(files) {
+  refFile = files[0] || null;
+  if (!refFile) return;
+  document.getElementById('fi-picked').textContent = '';
+  document.getElementById('fi-preview-name').textContent = refFile.name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('fi-preview').src = e.target.result;
+    document.getElementById('fi-preview-wrap').classList.add('on');
+  };
+  reader.readAsDataURL(refFile);
+}
+
+['up-drop','fi-drop'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('over'));
+  el.addEventListener('drop', e => {
+    e.preventDefault(); el.classList.remove('over');
+    if (id === 'up-drop') pickUpload(e.dataTransfer.files);
+    else pickRef(e.dataTransfer.files);
+  });
+});
+
+function toast(id, type, msg, icon) {
+  const wrap = document.getElementById(id);
+  const msgEl = document.getElementById(id + '-msg');
+  const iconEl = document.getElementById(id + '-icon');
+  wrap.className = 'toast on ' + type;
+  msgEl.textContent = msg;
+  iconEl.textContent = icon || '';
+}
+
+async function doUpload() {
+  const albumId = document.getElementById('up-album').value.trim();
+  if (!albumId) return toast('up-toast', 'err', 'album_id is required', '✗');
+  if (!uploadFiles.length) return toast('up-toast', 'err', 'select at least one photo', '✗');
+  const btn = document.getElementById('up-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Uploading ' + uploadFiles.length + ' photo' + (uploadFiles.length !== 1 ? 's' : '') + '...';
+  toast('up-toast', 'wait', 'indexing via rekognition...', '⋯');
+  try {
+    const fd = new FormData();
+    fd.append('album_id', albumId);
+    uploadFiles.forEach(f => fd.append('photos', f));
+    const r = await fetch(BASE + '/upload', { method: 'POST', body: fd });
+    const data = await r.json().catch(() => ({}));
+    if (r.ok) toast('up-toast', 'ok', 'indexed — ' + (data.message || data.count || uploadFiles.length + ' photos processed'), '✓');
+    else toast('up-toast', 'err', 'error ' + r.status + ': ' + (data.error || data.message || 'check backend'), '✗');
+  } catch {
+    toast('up-toast', 'err', 'could not reach ' + BASE, '✗');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Upload & index →';
+}
+
+async function doFind() {
+  const albumId = document.getElementById('fi-album').value.trim();
+  if (!albumId) return toast('fi-toast', 'err', 'album_id is required', '✗');
+  if (!refFile) return toast('fi-toast', 'err', 'drop a reference photo first', '✗');
+  const btn = document.getElementById('fi-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Scanning...';
+  toast('fi-toast', 'wait', 'rekognition matching faces...', '⋯');
+  const grid = document.getElementById('fi-grid');
+  const section = document.getElementById('results-section');
+  const empty = document.getElementById('results-empty');
+  grid.innerHTML = '';
+  section.style.display = 'none';
+  empty.style.display = 'none';
+  document.getElementById('fi-count').textContent = '';
+  for (let i = 0; i < 6; i++) {
+    const s = document.createElement('div'); s.className = 'skel'; grid.appendChild(s);
+  }
+  section.style.display = 'block';
+  try {
+    const fd = new FormData();
+    fd.append('album_id', albumId);
+    fd.append('photo', refFile);
+    const r = await fetch(BASE + '/getphoto', { method: 'POST', body: fd });
+    const data = await r.json().catch(() => ([]));
+    grid.innerHTML = '';
+    if (!r.ok) {
+      section.style.display = 'none';
+      empty.style.display = 'block';
+      toast('fi-toast', 'err', 'error ' + r.status + ': check backend logs', '✗');
+      btn.disabled = false; btn.textContent = 'Search album →'; return;
     }
-
-    function show(id, btn) {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('on'));
-        document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('on'));
-        document.getElementById('sec-' + id).classList.add('on');
-        btn.classList.add('on');
+    const urls = Array.isArray(data) ? data : [];
+    if (!urls.length) {
+      section.style.display = 'none';
+      empty.style.display = 'block';
+      toast('fi-toast', 'ok', 'no matches found in this album', '○');
+      btn.disabled = false; btn.textContent = 'Search album →'; return;
     }
-
-    function pickUpload(f) {
-        uploadFiles = Array.from(f);
-        document.getElementById('up-picked').textContent = uploadFiles.length + ' file' + (uploadFiles.length !== 1 ? 's' : '') + ' ready';
-    }
-
-    function pickRef(files) {
-        refFile = files[0] || null;
-        if (!refFile) return;
-        document.getElementById('fi-picked').textContent = refFile.name;
-        const reader = new FileReader();
-        reader.onload = e => {
-            document.getElementById('fi-preview').src = e.target.result;
-            document.getElementById('fi-preview-wrap').classList.add('on');
-        };
-        reader.readAsDataURL(refFile);
-    }
-
-    ['up-drop', 'fi-drop'].forEach(id => {
-        const el = document.getElementById(id);
-        el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
-        el.addEventListener('dragleave', () => el.classList.remove('over'));
-        el.addEventListener('drop', e => {
-            e.preventDefault(); el.classList.remove('over');
-            if (id === 'up-drop') pickUpload(e.dataTransfer.files);
-            else pickRef(e.dataTransfer.files);
-        });
+    toast('fi-toast', 'ok', urls.length + ' photo' + (urls.length !== 1 ? 's' : '') + ' matched', '✓');
+    document.getElementById('fi-count').textContent = urls.length + ' result' + (urls.length !== 1 ? 's' : '');
+    urls.forEach((url, i) => {
+      const c = document.createElement('div'); c.className = 'photo-card';
+      c.innerHTML = `
+        <span class="photo-num">${String(i + 1).padStart(2, '0')}</span>
+        <img src="${url}" alt="match ${i+1}" loading="lazy"/>
+        <div class="photo-card-overlay">
+          <a href="${url}" target="_blank">open ↗</a>
+        </div>`;
+      grid.appendChild(c);
     });
-
-    function toast(id, type, msg) {
-        const el = document.getElementById(id);
-        el.className = 'toast on ' + type;
-        el.textContent = msg;
-    }
-
-    async function doUpload() {
-        const albumId = document.getElementById('up-album').value.trim();
-        if (!albumId) return toast('up-toast', 'err', 'album_id is required');
-        if (!uploadFiles.length) return toast('up-toast', 'err', 'select at least one photo');
-        const btn = document.getElementById('up-btn');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spin"></span> Uploading ' + uploadFiles.length + ' photo' + (uploadFiles.length !== 1 ? 's' : '') + '...';
-        toast('up-toast', 'wait', 'sending to backend...');
-        try {
-            const fd = new FormData();
-            //fd.append('album_id', albumId);
-            uploadFiles.forEach(f => fd.append('files', f));
-            const r = await fetch(BASE + '/upload', { method: 'POST', body: fd });
-            const data = await r.json().catch(() => ({}));
-            if (r.ok) toast('up-toast', 'ok', 'done — ' + (data.message || data.count || 'photos indexed'));
-            else toast('up-toast', 'err', 'error ' + r.status + ': ' + (data.error || data.message || 'check backend'));
-        } catch {
-            toast('up-toast', 'err', 'could not reach ' + BASE);
-        }
-        btn.disabled = false;
-        btn.textContent = 'Upload';
-    }
-
-    async function doFind() {
-        const albumId = document.getElementById('fi-album').value.trim();
-        if (!albumId) return toast('fi-toast', 'err', 'album_id is required');
-        if (!refFile) return toast('fi-toast', 'err', 'drop your reference photo');
-        const btn = document.getElementById('fi-btn');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spin"></span> Scanning...';
-        toast('fi-toast', 'wait', 'rekognition searching...');
-        const grid = document.getElementById('fi-grid');
-        grid.innerHTML = '';
-        document.getElementById('fi-count').textContent = '';
-        for (let i = 0; i < 4; i++) {
-            const s = document.createElement('div');
-            s.className = 'skel';
-            grid.appendChild(s);
-        }
-        try {
-            const fd = new FormData();
-            fd.append('album_id', albumId);
-            fd.append('file', refFile);
-            const r = await fetch(BASE + '/getphoto', { method: 'POST', body: fd });
-            const data = await r.json().catch(() => ([]));
-            grid.innerHTML = '';
-            if (!r.ok) {
-                toast('fi-toast', 'err', 'error ' + r.status + ': check backend');
-                btn.disabled = false; btn.textContent = 'Find my photos'; return;
-            }
-            const urls = Array.isArray(data) ? data : [];
-            if (!urls.length) {
-                toast('fi-toast', 'ok', 'no matches found in this album');
-                btn.disabled = false; btn.textContent = 'Find my photos'; return;
-            }
-            toast('fi-toast', 'ok', 'found ' + urls.length + ' photo' + (urls.length !== 1 ? 's' : ''));
-            document.getElementById('fi-count').textContent = urls.length + ' result' + (urls.length !== 1 ? 's' : '');
-            urls.forEach((url, i) => {
-                const c = document.createElement('div');
-                c.className = 'photo-card';
-                c.innerHTML = `<img src="${url}" alt="photo ${i+1}" loading="lazy"/>
-        <a href="${url}" target="_blank">#${String(i+1).padStart(2,'0')}<span>↗</span></a>`;
-                grid.appendChild(c);
-            });
-        } catch {
-            grid.innerHTML = '';
-            toast('fi-toast', 'err', 'could not reach ' + BASE);
-        }
-        btn.disabled = false;
-        btn.textContent = 'Find my photos';
-    }
+  } catch {
+    grid.innerHTML = '';
+    section.style.display = 'none';
+    empty.style.display = 'block';
+    toast('fi-toast', 'err', 'could not reach ' + BASE, '✗');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Search album →';
+}
 </script>
 </body>
 </html>

@@ -119,9 +119,6 @@ func UserPhoto(w http.ResponseWriter, r *http.Request) {
 		rows.Scan(&link)
 		results = append(results, link)
 	}
-	for _, res := range results {
-		fmt.Println(res)
-	}
 
 	encoder := json.NewEncoder(w)
 	encoder.SetEscapeHTML(false)
