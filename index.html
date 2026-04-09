@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>GrabPic</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --sans:'IBM Plex Sans',sans-serif;
+            --mono:'IBM Plex Mono',monospace;
+            --bg:#ffffff;
+            --bg2:#f5f5f4;
+            --bg3:#ebebea;
+            --t1:#1a1a18;
+            --t2:#6b6b67;
+            --t3:#a8a8a4;
+            --bdr:rgba(0,0,0,.1);
+            --bdr2:rgba(0,0,0,.18);
+            --r:8px;
+            --rl:12px;
+            --ok-bg:#eaf3de;
+            --ok-fg:#3b6d11;
+            --err-bg:#fcebeb;
+            --err-fg:#a32d2d;
+        }
+        @media(prefers-color-scheme:dark){
+            :root{
+                --bg:#1c1c1a;
+                --bg2:#252522;
+                --bg3:#2e2e2b;
+                --t1:#f0f0ec;
+                --t2:#9a9a94;
+                --t3:#616160;
+                --bdr:rgba(255,255,255,.08);
+                --bdr2:rgba(255,255,255,.15);
+                --ok-bg:#173404;
+                --ok-fg:#c0dd97;
+                --err-bg:#501313;
+                --err-fg:#f7c1c1;
+            }
+        }
+        body{font-family:var(--sans);color:var(--t1);background:var(--bg3);font-size:14px;min-height:100vh}
+        .wrap{max-width:560px;margin:0 auto;padding:2.5rem 1.25rem 5rem}
+        .header{margin-bottom:2.25rem}
+        .wordmark{font-family:var(--mono);font-size:15px;font-weight:500;letter-spacing:-.3px;display:flex;align-items:center;gap:10px}
+        .dot{width:8px;height:8px;border-radius:50%;background:var(--t1);display:inline-block}
+        .endpoint-bar{margin-top:.75rem;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+        .pill{font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:100px;background:var(--bg2);border:0.5px solid var(--bdr2);color:var(--t2)}
+        .base-btn{font-family:var(--mono);font-size:11px;color:var(--t3);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+        .base-btn:hover{color:var(--t1)}
+        .seg{display:flex;gap:1px;margin-bottom:2rem;border:0.5px solid var(--bdr2);border-radius:var(--r);overflow:hidden}
+        .seg-btn{flex:1;padding:8px;background:var(--bg2);border:none;font-family:var(--sans);font-size:13px;color:var(--t2);cursor:pointer;transition:all .12s}
+        .seg-btn.on{background:var(--bg);color:var(--t1);font-weight:500}
+        .section{display:none}.section.on{display:block}
+        .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);margin-bottom:7px;display:block}
+        .field{margin-bottom:1.25rem}
+        input[type=text]{width:100%;padding:9px 11px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:13px;outline:none;transition:border .12s}
+        input[type=text]:focus{border-color:var(--t1)}
+        .drop{border:0.5px dashed var(--bdr2);border-radius:var(--rl);padding:2.5rem 1rem;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg);position:relative}
+        .drop:hover,.drop.over{background:var(--bg2);border-color:var(--t2)}
+        .drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+        .drop-icon{width:36px;height:36px;border:0.5px solid var(--bdr2);border-radius:8px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center}
+        .drop-icon svg{width:16px;height:16px;stroke:var(--t2);fill:none;stroke-width:1.5}
+        .drop p{font-size:13px;color:var(--t2);pointer-events:none}
+        .drop .sub{font-size:11px;color:var(--t3);margin-top:4px;font-family:var(--mono)}
+        .picked{font-family:var(--mono);font-size:11px;color:var(--t1);margin-top:8px;font-weight:500;pointer-events:none}
+        .preview-wrap{margin-top:10px;display:none}
+        .preview-wrap.on{display:block}
+        .preview-img{width:72px;height:72px;border-radius:var(--r);object-fit:cover;border:0.5px solid var(--bdr2)}
+        .btn{width:100%;padding:10px;background:var(--t1);color:var(--bg);border:none;border-radius:var(--r);font-family:var(--sans);font-size:14px;font-weight:500;cursor:pointer;transition:opacity .12s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:.25rem}
+        .btn:hover{opacity:.82}
+        .btn:disabled{opacity:.35;cursor:not-allowed}
+        .toast{margin-top:1rem;padding:10px 13px;border-radius:var(--r);font-size:13px;display:none;font-family:var(--mono)}
+        .toast.on{display:block}
+        .toast.ok{background:var(--ok-bg);color:var(--ok-fg)}
+        .toast.err{background:var(--err-bg);color:var(--err-fg)}
+        .toast.wait{background:var(--bg2);color:var(--t2)}
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:1.25rem}
+        .photo-card{border-radius:var(--r);overflow:hidden;border:0.5px solid var(--bdr);background:var(--bg2);position:relative;aspect-ratio:1}
+        .photo-card img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity .2s}
+        .photo-card:hover img{opacity:.85}
+        .photo-card a{position:absolute;bottom:0;left:0;right:0;padding:6px 8px;background:rgba(0,0,0,.55);font-family:var(--mono);font-size:10px;color:#fff;text-decoration:none;display:flex;justify-content:space-between;align-items:center;opacity:0;transition:opacity .15s}
+        .photo-card:hover a{opacity:1}
+        .photo-card a span{opacity:.7}
+        .skel{background:var(--bg3);border-radius:var(--r);aspect-ratio:1;animation:pulse 1.2s ease-in-out infinite}
+        @keyframes pulse{0%,100%{opacity:.4}50%{opacity:.8}}
+        .spin{width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:rot .55s linear infinite;display:inline-block}
+        @keyframes rot{to{transform:rotate(360deg)}}
+        .count-tag{font-family:var(--mono);font-size:11px;color:var(--t3);margin-top:10px}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="header">
+        <div class="wordmark"><span class="dot"></span> grabpic</div>
+        <div class="endpoint-bar">
+            <span class="pill">POST /upload</span>
+            <span class="pill">POST /getphoto</span>
+            <button class="base-btn" id="base-lbl" onclick="changeBase()">localhost:8080</button>
+        </div>
+    </div>
+
+    <div class="seg">
+        <button class="seg-btn on" onclick="show('upload',this)">Upload photos</button>
+        <button class="seg-btn" onclick="show('find',this)">Find my photos</button>
+    </div>
+
+    <div id="sec-upload" class="section on">
+        <div class="field">
+            <label class="lbl">Album ID</label>
+            <input type="text" id="up-album" placeholder="e.g. album_abc123"/>
+        </div>
+        <div class="field">
+            <label class="lbl">Photos</label>
+            <div class="drop" id="up-drop">
+                <input type="file" id="up-files" multiple accept="image/*" onchange="pickUpload(this.files)"/>
+                <div class="drop-icon">
+                    <svg viewBox="0 0 16 16"><path d="M8 2v8M4 6l4-4 4 4"/><path d="M2 12h12"/></svg>
+                </div>
+                <p>Drop photos or click to select</p>
+                <p class="sub">JPG / PNG — multiple OK</p>
+                <div class="picked" id="up-picked"></div>
+            </div>
+        </div>
+        <button class="btn" id="up-btn" onclick="doUpload()">Upload</button>
+        <div class="toast" id="up-toast"></div>
+    </div>
+
+    <div id="sec-find" class="section">
+        <div class="field">
+            <label class="lbl">Album ID</label>
+            <input type="text" id="fi-album" placeholder="e.g. album_abc123"/>
+        </div>
+        <div class="field">
+            <label class="lbl">Your photo</label>
+            <div class="drop" id="fi-drop">
+                <input type="file" id="fi-file" accept="image/*" onchange="pickRef(this.files)"/>
+                <div class="drop-icon">
+                    <svg viewBox="0 0 16 16"><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+                </div>
+                <p>Drop your photo here</p>
+                <p class="sub">clear face shot works best</p>
+                <div class="picked" id="fi-picked"></div>
+            </div>
+            <div class="preview-wrap" id="fi-preview-wrap">
+                <img class="preview-img" id="fi-preview" src="" alt="preview"/>
+            </div>
+        </div>
+        <button class="btn" id="fi-btn" onclick="doFind()">Find my photos</button>
+        <div class="toast" id="fi-toast"></div>
+        <div class="count-tag" id="fi-count"></div>
+        <div class="grid" id="fi-grid"></div>
+    </div>
+</div>
+
+<script>
+    let BASE = 'http://localhost:8080';
+    let uploadFiles = [];
+    let refFile = null;
+
+    document.getElementById('base-lbl').textContent = BASE.replace('http://', '');
+
+    function changeBase() {
+        const v = prompt('Backend base URL', BASE);
+        if (v) {
+            BASE = v.replace(/\/$/, '');
+            document.getElementById('base-lbl').textContent = BASE.replace('http://','').replace('https://','');
+        }
+    }
+
+    function show(id, btn) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('on'));
+        document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('on'));
+        document.getElementById('sec-' + id).classList.add('on');
+        btn.classList.add('on');
+    }
+
+    function pickUpload(f) {
+        uploadFiles = Array.from(f);
+        document.getElementById('up-picked').textContent = uploadFiles.length + ' file' + (uploadFiles.length !== 1 ? 's' : '') + ' ready';
+    }
+
+    function pickRef(files) {
+        refFile = files[0] || null;
+        if (!refFile) return;
+        document.getElementById('fi-picked').textContent = refFile.name;
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('fi-preview').src = e.target.result;
+            document.getElementById('fi-preview-wrap').classList.add('on');
+        };
+        reader.readAsDataURL(refFile);
+    }
+
+    ['up-drop', 'fi-drop'].forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
+        el.addEventListener('dragleave', () => el.classList.remove('over'));
+        el.addEventListener('drop', e => {
+            e.preventDefault(); el.classList.remove('over');
+            if (id === 'up-drop') pickUpload(e.dataTransfer.files);
+            else pickRef(e.dataTransfer.files);
+        });
+    });
+
+    function toast(id, type, msg) {
+        const el = document.getElementById(id);
+        el.className = 'toast on ' + type;
+        el.textContent = msg;
+    }
+
+    async function doUpload() {
+        const albumId = document.getElementById('up-album').value.trim();
+        if (!albumId) return toast('up-toast', 'err', 'album_id is required');
+        if (!uploadFiles.length) return toast('up-toast', 'err', 'select at least one photo');
+        const btn = document.getElementById('up-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spin"></span> Uploading ' + uploadFiles.length + ' photo' + (uploadFiles.length !== 1 ? 's' : '') + '...';
+        toast('up-toast', 'wait', 'sending to backend...');
+        try {
+            const fd = new FormData();
+            //fd.append('album_id', albumId);
+            uploadFiles.forEach(f => fd.append('files', f));
+            const r = await fetch(BASE + '/upload', { method: 'POST', body: fd });
+            const data = await r.json().catch(() => ({}));
+            if (r.ok) toast('up-toast', 'ok', 'done — ' + (data.message || data.count || 'photos indexed'));
+            else toast('up-toast', 'err', 'error ' + r.status + ': ' + (data.error || data.message || 'check backend'));
+        } catch {
+            toast('up-toast', 'err', 'could not reach ' + BASE);
+        }
+        btn.disabled = false;
+        btn.textContent = 'Upload';
+    }
+
+    async function doFind() {
+        const albumId = document.getElementById('fi-album').value.trim();
+        if (!albumId) return toast('fi-toast', 'err', 'album_id is required');
+        if (!refFile) return toast('fi-toast', 'err', 'drop your reference photo');
+        const btn = document.getElementById('fi-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spin"></span> Scanning...';
+        toast('fi-toast', 'wait', 'rekognition searching...');
+        const grid = document.getElementById('fi-grid');
+        grid.innerHTML = '';
+        document.getElementById('fi-count').textContent = '';
+        for (let i = 0; i < 4; i++) {
+            const s = document.createElement('div');
+            s.className = 'skel';
+            grid.appendChild(s);
+        }
+        try {
+            const fd = new FormData();
+            fd.append('album_id', albumId);
+            fd.append('file', refFile);
+            const r = await fetch(BASE + '/getphoto', { method: 'POST', body: fd });
+            const data = await r.json().catch(() => ([]));
+            grid.innerHTML = '';
+            if (!r.ok) {
+                toast('fi-toast', 'err', 'error ' + r.status + ': check backend');
+                btn.disabled = false; btn.textContent = 'Find my photos'; return;
+            }
+            const urls = Array.isArray(data) ? data : [];
+            if (!urls.length) {
+                toast('fi-toast', 'ok', 'no matches found in this album');
+                btn.disabled = false; btn.textContent = 'Find my photos'; return;
+            }
+            toast('fi-toast', 'ok', 'found ' + urls.length + ' photo' + (urls.length !== 1 ? 's' : ''));
+            document.getElementById('fi-count').textContent = urls.length + ' result' + (urls.length !== 1 ? 's' : '');
+            urls.forEach((url, i) => {
+                const c = document.createElement('div');
+                c.className = 'photo-card';
+                c.innerHTML = `<img src="${url}" alt="photo ${i+1}" loading="lazy"/>
+        <a href="${url}" target="_blank">#${String(i+1).padStart(2,'0')}<span>↗</span></a>`;
+                grid.appendChild(c);
+            });
+        } catch {
+            grid.innerHTML = '';
+            toast('fi-toast', 'err', 'could not reach ' + BASE);
+        }
+        btn.disabled = false;
+        btn.textContent = 'Find my photos';
+    }
+</script>
+</body>
+</html>
