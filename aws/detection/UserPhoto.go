@@ -30,7 +30,7 @@ func UserPhoto(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	Db, err := pgx.Connect(context.TODO(), "postgres://postgres:postgres@localhost:5432/grabpic")
+	Db, err := pgx.Connect(context.TODO(), "postgres://grabpic_user:strongpassword@localhost:5432/grabpic")
 	if err != nil {
 		http.Error(w, "db error", 500)
 		return

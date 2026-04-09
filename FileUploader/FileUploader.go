@@ -18,7 +18,7 @@ var Db *pgx.Conn
 func FileUploader(w http.ResponseWriter, r *http.Request) {
 	detection.CreateCollection()
 	r.ParseMultipartForm(20 << 20)
-	Db, _ = pgx.Connect(context.TODO(), "postgres://postgres:postgres@localhost:5432/grabpic")
+	Db, _ = pgx.Connect(context.TODO(), "postgres://grabpic_user:strongpassword@localhost:5432/grabpic")
 
 	fileList := r.MultipartForm.File["files"]
 	name := "goa trip"
